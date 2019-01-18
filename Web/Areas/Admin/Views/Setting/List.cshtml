@@ -1,0 +1,150 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/style.css" />
+    <link href="~/assets/css/codemirror.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/assets/css/ace.min.css" />
+    <link rel="stylesheet" href="~/assets/css/font-awesome.min.css" />
+    <link href="~/css/page.css" rel="stylesheet" />
+    <script src="~/assets/js/jquery.min.js"></script>
+    <!--[if IE]>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <![endif]-->
+    <!--[if !IE]> -->
+    <script type="text/javascript">
+        window.jQuery || document.write("<script src='/assets/js/jquery-2.0.3.min.js'>" + "<" + "/script>");
+    </script>
+    <!-- <![endif]-->
+    <script type="text/javascript">
+        if ("ontouchend" in document) document.write("<script src='/assets/js/jquery.mobile.custom.min.js'>" + "<" + "/script>");
+    </script>
+    <script type="text/javascript" src="~/js/vue.min2.5.16.js"></script>
+    <script type="text/javascript" src="~/js/vue-resource.min1.5.0.js"></script>
+    <script src="~/assets/js/bootstrap.min.js"></script>
+    <script src="~/assets/js/typeahead-bs2.min.js"></script>
+    <!-- page specific plugin scripts -->
+    <script src="~/assets/js/jquery.dataTables.min.js"></script>
+    <script src="~/assets/js/jquery.dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/js/H-ui.js"></script>
+    <script type="text/javascript" src="~/js/H-ui.admin.js"></script>
+    <script src="~/assets/layer/layer.js" type="text/javascript"></script>
+    <script src="~/assets/laydate/laydate.js" type="text/javascript"></script>
+    <script src="~/js/jquery.uploadimg.js"></script>
+    <script src="~/js/wangEditor.min.js"></script>
+    <title>参数管理</title>
+    <style>
+        .param_changeall {
+            margin: 20px;
+        }
+
+        .param_list {
+            margin-bottom: 5px;
+        }
+
+        .param_tilte {
+            display: inline-block;
+            width: 200px;
+            text-align: right;
+        }
+
+        .param_name {
+            display: inline-block;
+            width: 220px;
+        }
+
+        .param_input {
+            display: inline-block;
+            width: 400px;
+        }
+
+            .param_input input {
+                width: 250px;
+            }
+
+        .param_change {
+            display: inline-block;
+        }
+
+            .param_change button {
+                width: 70px;
+                height: 28px;
+            }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="param_changeall"><a v-on:click="editall" class="btn btn-success">修改全部</a></div>
+        <div class="param_list" v-for="item in list">
+            <div class="param_tilte">
+                <span v-if="item.levelId==1" style="color:red;" v-html="item.typeName+'>>'"></span>
+            </div>
+            <div class="param_name">
+                <span class="changetitle" v-html="item.name+'：'"></span>
+            </div>
+            <div class="param_input">
+                <input type="text" v-model="item.param" /><span class="changeremark" v-html="item.remark"></span>
+            </div>
+            <div class="param_change">
+                <span><button v-on:click="edit(item.id,item.param)" class="btn-warning">修改</button></span>
+            </div>
+        </div>
+        <div class="param_changeall"><a v-on:click="editall" class="btn btn-success">修改全部</a></div>
+    </div>
+    <script type="text/javascript">
+        var settings = new Array();
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                list: []
+            },
+            methods: {
+                getpage: function () {
+                    this.$http.post('/admin/setting/list', {}, { emulateJSON: true }).then(function (result) {
+                        this.list = result.data.data;
+                    })
+                },
+                edit: function (id, param) {
+                    this.$http.post('/admin/setting/edit', { id: id, parm: param }, { emulateJSON: true }).then(function (result) {
+                        if (result.data.status == 1) {
+                            layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                            this.getpage();
+                        }
+                        else if (result.data.status == 0) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                        else if (result.data.status == 302) {
+                            window.location.href = result.data.data;
+                        }
+                    })
+                },
+                editall: function () {
+                    $.each(this.list, function (k, val) {
+                        var setting = { id: 0, param: '' };
+                        setting.id = val.id;
+                        setting.param = val.param;
+                        settings.push(setting);
+                    })
+                    this.$http.post('/admin/setting/editall', { settings: settings }, { emulateJSON: true }).then(function (result) {
+                        if (result.data.status == 1) {
+                            layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                            this.getpage();
+                        }
+                        else if (result.data.status == 0) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                        else if (result.data.status == 302) {
+                            window.location.href = result.data.data;
+                        }
+                    })
+                }
+            },
+            mounted: function () {
+                this.getpage();
+            }
+        });
+    </script>
+</body>
+</html>

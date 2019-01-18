@@ -1,0 +1,28 @@
+.clearfix {
+    zoom: 1;
+}
+.fl{
+    float: left;
+}
+.w20f{
+    width: 20%;
+}
+.mt20{
+    margin-top: 20px;
+}
+.mt10{
+    margin-top: 10px;
+}
+.tc{
+    text-align: center;
+}
+.border1{
+    border: 1px solid #ddd;
+    line-height: 30px;
+}
+.borderRight-none{
+    border-right: none;
+}
+.p5{
+    padding: 5px;
+}

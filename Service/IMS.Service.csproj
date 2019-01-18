@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{CFC4137D-9E7E-4581-A63F-9CE932833277}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>IMS.Service</RootNamespace>
+    <AssemblyName>IMS.Service</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BaseEntity.cs" />
+    <Compile Include="Config\BonusConfig.cs" />
+    <Compile Include="Config\GoodsConfig.cs" />
+    <Compile Include="Config\GoodsCarConfig.cs" />
+    <Compile Include="Config\GoodsAreaConfig.cs" />
+    <Compile Include="Config\BankAccountConfig.cs" />
+    <Compile Include="Config\AdminConfig.cs" />
+    <Compile Include="Config\AdminLogConfig.cs" />
+    <Compile Include="Config\GoodsSecondTypeConfig.cs" />
+    <Compile Include="Config\GoodsImgConfig.cs" />
+    <Compile Include="Config\DeliveryConfig.cs" />
+    <Compile Include="Config\BonusRatioConfig.cs" />
+    <Compile Include="Config\IdNameConfig.cs" />
+    <Compile Include="Config\MessageConfig.cs" />
+    <Compile Include="Config\OrderApplyConfig.cs" />
+    <Compile Include="Config\OrderListConfig.cs" />
+    <Compile Include="Config\JournalConfig.cs" />
+    <Compile Include="Config\UserTokenConfig.cs" />
+    <Compile Include="Config\UserConfig.cs" />
+    <Compile Include="Config\OrderConfig.cs" />
+    <Compile Include="Config\SlideConfig.cs" />
+    <Compile Include="Config\PayCodeConfig.cs" />
+    <Compile Include="Config\NoticeConfig.cs" />
+    <Compile Include="Config\LogisticsConfig.cs" />
+    <Compile Include="Config\PermissionConfig.cs" />
+    <Compile Include="Config\AddressConfig.cs" />
+    <Compile Include="Config\GoodsTypeConfig.cs" />
+    <Compile Include="Config\PermissionTypeConfig.cs" />
+    <Compile Include="Config\SettingConfig.cs" />
+    <Compile Include="Config\TakeCashConfig.cs" />
+    <Compile Include="EFExtensions.cs" />
+    <Compile Include="Entity\BonusEntity.cs" />
+    <Compile Include="Entity\GoodsCarEntity.cs" />
+    <Compile Include="Entity\DeliveryEntity.cs" />
+    <Compile Include="Entity\BonusRatioEntity.cs" />
+    <Compile Include="Entity\IdNameEntity.cs" />
+    <Compile Include="Entity\MessageEntity.cs" />
+    <Compile Include="Entity\OrderApplyEntity.cs" />
+    <Compile Include="Entity\OrderListEntity.cs" />
+    <Compile Include="Entity\OrderEntity.cs" />
+    <Compile Include="Entity\GoodsEntity.cs" />
+    <Compile Include="Entity\GoodsSecondTypeEntity.cs" />
+    <Compile Include="Entity\GoodsImgEntity.cs" />
+    <Compile Include="Entity\GoodsTypeEntity.cs" />
+    <Compile Include="Entity\GoodsAreaEntity.cs" />
+    <Compile Include="Entity\LogisticsEntity.cs" />
+    <Compile Include="Entity\AddressEntity.cs" />
+    <Compile Include="Entity\JournalEntity.cs" />
+    <Compile Include="Entity\SlideEntity.cs" />
+    <Compile Include="Entity\NoticeEntity.cs" />
+    <Compile Include="Entity\AdminEntity.cs" />
+    <Compile Include="Entity\AdminLogEntity.cs" />
+    <Compile Include="Entity\BankAccountEntity.cs" />
+    <Compile Include="Entity\PayCodeEntity.cs" />
+    <Compile Include="Entity\PermissionEntity.cs" />
+    <Compile Include="Entity\PermissionTypeEntity.cs" />
+    <Compile Include="Entity\SettingEntity.cs" />
+    <Compile Include="Entity\TakeCashEntity.cs" />
+    <Compile Include="Entity\UserTokenEntity.cs" />
+    <Compile Include="Entity\UserEntity.cs" />
+    <Compile Include="MyDbContext.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service\AdminLogService.cs" />
+    <Compile Include="Service\AdminService.cs" />
+    <Compile Include="Service\AddressService.cs" />
+    <Compile Include="Service\BonusService.cs" />
+    <Compile Include="Service\GoodsImgService.cs" />
+    <Compile Include="Service\BonusRatioService.cs" />
+    <Compile Include="Service\JournalService.cs" />
+    <Compile Include="Service\OrderApplyService.cs" />
+    <Compile Include="Service\SettingService.cs" />
+    <Compile Include="Service\OrderListService.cs" />
+    <Compile Include="Service\PayCodeService.cs" />
+    <Compile Include="Service\GoodsCarService.cs" />
+    <Compile Include="Service\OrderService.cs" />
+    <Compile Include="Service\IdNameService.cs" />
+    <Compile Include="Service\MessageService.cs" />
+    <Compile Include="Service\BankAccountService.cs" />
+    <Compile Include="Service\SlideService.cs" />
+    <Compile Include="Service\NoticeService.cs" />
+    <Compile Include="Service\GoodsTypeService.cs" />
+    <Compile Include="Service\GoodsService.cs" />
+    <Compile Include="Service\GoodsSecondTypeService.cs" />
+    <Compile Include="Service\PermissionService.cs" />
+    <Compile Include="Service\PermissionTypeService.cs" />
+    <Compile Include="Service\GoodsAreaService.cs" />
+    <Compile Include="Service\UserTokenService.cs" />
+    <Compile Include="Service\UserService.cs" />
+    <Compile Include="Service\TakeCashService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\IMS.Common.csproj">
+      <Project>{5cdd3c39-9a57-4fdc-87ff-6910511f70ba}</Project>
+      <Name>IMS.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DTO\IMS.DTO.csproj">
+      <Project>{599be380-8a33-46b7-be16-ab6d08ef0c5c}</Project>
+      <Name>IMS.DTO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IService\IMS.IService.csproj">
+      <Project>{865aa8f1-efaf-4173-a31b-b7a98a8e829a}</Project>
+      <Name>IMS.IService</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

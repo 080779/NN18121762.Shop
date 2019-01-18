@@ -1,0 +1,31 @@
+﻿.page-bar{
+    margin:40px;
+}
+
+ul,li{
+    margin: 0px;
+    padding: 0px;
+}
+li{
+    list-style: none;
+      float:left;
+
+}
+.page-bar li:first-child>a {
+   margin-left: 0px
+}
+.page-bar a{
+    border: 1px solid #ddd;
+    text-decoration: none;
+    position: relative;
+    float: left;
+    padding: 6px 12px;
+    margin-left: -1px;
+    line-height: 1.42857143;
+    color: #337ab7;
+    cursor: pointer
+}
+
+
+
+

@@ -1,0 +1,494 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/style.css" />
+    <link href="~/assets/css/codemirror.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/assets/css/ace.min.css" />
+    <link rel="stylesheet" href="~/assets/css/font-awesome.min.css" />
+    <link href="~/css/page.css" rel="stylesheet" />
+    <script src="~/assets/js/jquery.min.js"></script>
+    <!--[if IE]>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <![endif]-->
+    <!--[if !IE]> -->
+    <script type="text/javascript">
+        window.jQuery || document.write("<script src='/assets/js/jquery-2.0.3.min.js'>" + "<" + "/script>");
+    </script>
+    <!-- <![endif]-->
+    <script type="text/javascript">
+        if ("ontouchend" in document) document.write("<script src='/assets/js/jquery.mobile.custom.min.js'>" + "<" + "/script>");
+    </script>
+    <script type="text/javascript" src="~/js/vue.min2.5.16.js"></script>
+    <script type="text/javascript" src="~/js/vue-resource.min1.5.0.js"></script>
+    <script src="~/assets/js/bootstrap.min.js"></script>
+    <script src="~/assets/js/typeahead-bs2.min.js"></script>
+    <!-- page specific plugin scripts -->
+    <script src="~/assets/js/jquery.dataTables.min.js"></script>
+    <script src="~/assets/js/jquery.dataTables.bootstrap.js"></script>
+    <script type="text/javascript" src="~/js/H-ui.js"></script>
+    <script type="text/javascript" src="~/js/H-ui.admin.js"></script>
+    <script src="~/assets/layer/layer.js" type="text/javascript"></script>
+    <script src="~/assets/laydate/laydate.js" type="text/javascript"></script>
+    <title>会员管理</title>
+</head>
+
+<body>
+    <div id="app">
+        <div class="clearfix" style="margin-top:20px">
+            <span class="l_f">
+                <a v-on:click="add" class="btn btn-success"><i class="icon-plus"></i>添加用户</a>
+                @*<a v-on:click="upset" class="btn btn-success"><i class="icon-plus"></i>升级设置</a>*@
+            </span>
+        </div>
+        <div class="search_style">
+            <ul class="search_content clearfix">
+                <li>
+                    <label class="l_f">选择日期</label>
+                    <input class="inline laydate-icon" id="start" style="margin-left:10px;" v-on:focus='getstart' />至
+                    <input class="inline laydate-icon" id="end" style="margin-left:10px;" v-on:focus='getend' />
+                </li>
+                <li>
+                    <label class="l_f">会员等级</label>
+                    <select v-model="levelId">
+                        <option value="">请选择</option>
+                        <option v-for="level in levels" v-bind:value="level.id" v-html="level.name"></option>
+                    </select>
+                </li>
+                <li>
+                    <label class="l_f">会员信息</label>
+                    <input name="" v-model="searchs.keyword" type="text" class="text_add" placeholder="会员信息" style="width:150px" />
+                </li>
+                <li style="width:90px;"><button type="button" v-on:click="search" class="btn_search"><i class="icon-search"></i>查询</button></li>
+            </ul>
+        </div>
+        <div class="table_menu_list">
+            <table class="table table-striped table-bordered table-hover" id="sample-table">
+                <thead>
+                    <tr>
+                        <th width="60">编号</th>
+                        <th width="100">注册时间</th>
+                        <th width="100">会员账号</th>
+                        <th width="100">会员昵称</th>
+                        <th width="120">会员等级</th>
+                        <th width="80">余额</th>
+                        <th width="60">状态</th>
+                        <th width="120">操作</th>
+                    </tr>
+                </thead>
+                <tbody v-for="user in users">
+                    <tr>
+                        <td v-html="user.id"></td>
+                        <td v-html="user.createTime"></td>
+                        <td v-html="user.mobile"></td>
+                        <td v-html="user.nickName"></td>
+                        <td v-html="user.levelName"></td>
+                        <td v-html="user.amount"></td>
+                        <td v-html="user.isEnabled==true?'已启用':'停用'"></td>
+                        <td>
+                            <a v-on:click="resetpwd(user.id,user.mobile)" href="javascript:;" title="重置密码" class="btn btn-xs btn-success">重置密码</a>
+                            <a v-on:click="frozen(user.id,user.isEnabled)" href="javascript:;" title="冻结用户" class="btn btn-xs btn-success" v-html="user.isEnabled?'冻结用户':'解冻用户'"></a>
+                            <a title="删除用户" href="javascript:;" v-on:click="del(user.id)" class="btn btn-xs btn-warning">删除用户</a>
+                            <!--<a href="javascript:;" v-on:click="charge(user.id,user.mobile)" class="btn btn-xs btn-warning">充值</a>-->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="page-bar">
+            <ul>
+                <li><a v-on:click="pages.cur=1,getpage()">首页</a></li>
+                <li v-if="pages.cur>1"><a v-on:click="pages.cur--,getpage()">上一页</a></li>
+                <li v-if="pages.cur==1"><a class="banclick">上一页</a></li>
+                <li v-for="index in indexs" v-bind:class="{'active':pages.cur==index}"><a v-on:click="pageclick(index)" v-html="index"></a></li>
+                <li v-if="pages.cur!=pages.all"><a v-on:click="pages.cur++,getpage()">下一页</a></li>
+                <li v-if="pages.cur==pages.all"><a class="banclick">下一页</a></li>
+                <li><a><input type='text' id='txtpage' style='width: 30px;height: 18px;' v-model="pages.txtpage" onkeyup="value=value.replace(/[^\d]/g,'')" /></a></li>
+                <li><a id='go' v-on:click="go">跳转</a></li>
+                <li><a v-on:click="pages.cur=pages.all,getpage()">尾页</a></li>
+                <li><a>共<i><font v-html="pages.all"></font></i>页</a></li>
+            </ul>
+        </div>
+
+        <!--添加用户图层-->
+        <div class="add_menber" id="add" style="display:none">
+            <ul class="page-content">
+                <li><label class="label_name">会员账号：</label><span class="add_name"><input value="" placeholder="会员账号" v-model="adds.mobile" type="text" class="text_add" /></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">推荐人账号：</label><span class="add_name"><input placeholder="推荐人账号" type="text" v-model="adds.recommendmobile" class="text_add" /></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">登录密码：</label><span class="add_name"><input placeholder="登录密码" type="password" v-model="adds.password" class="text_add" /></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">确认密码：</label><span class="add_name"><input placeholder="确认密码" type="password" v-model="adds.password1" class="text_add" /></span><div class="prompt r_f"></div></li>
+            </ul>
+        </div>
+
+        <!--升级设置图层-->
+        <div class="add_menber" id="upset" style="display:none">
+            <table class="table table-striped table-bordered table-hover" id="sample-table">
+                <tbody>
+                    <tr v-for="userUp in userUps">
+                        <td v-html="userUp.name"></td>
+                        <td>¥<input type="text" v-model="userUp.parm" maxlength="4" onKeyUp="value=value.replace(/[^\d]/g,'')" />元</td>
+                    </tr>
+                    <tr v-for="discount in discounts">
+                        <td v-html="discount.name"></td>
+                        <td><input type="text" v-model="discount.parm" maxlength="3" />折</td>
+                    </tr>
+                    <tr>
+                        <td>第三级显示</td>
+                        <td><input type="radio" name="threeplay" id="threeplay1" v-model="threeplay.parm" value="1" /><label for="threeplay1">显示</label><input type="radio" name="threeplay" id="threeplay0" v-model="threeplay.parm" value="0" /><label for="threeplay0">隐藏</label></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!--重置密码图层-->
+        <div class="add_menber" id="resetpwd" style="display:none">
+            <ul class="page-content">
+                <li><label class="label_name">会员账号：</label><span class="add_name" v-html="resetpwds.mobile"></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">登录密码：</label><span class="add_name"><input placeholder="登录密码" type="password" v-model="resetpwds.password" class="text_add" /></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">确认密码：</label><span class="add_name"><input placeholder="确认密码" type="password" v-model="resetpwds.password1" class="text_add" /></span><div class="prompt r_f"></div></li>
+            </ul>
+        </div>
+
+        <!--充值图层-->
+        <div class="add_menber" id="charge" style="display:none">
+            <ul class="page-content">
+                <li><label class="label_name">会员账号：</label><span class="add_name" v-html="charges.mobile"></span><div class="prompt r_f"></div></li>
+                <li><label class="label_name">金额：</label><span class="add_name"><input placeholder="金额" type="text" v-model="charges.amount" class="text_add" /></span><div class="prompt r_f"></div></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    var startTime;
+    var endTime;
+    var vue = new Vue({
+        el: "#app",
+        data: {
+            users: [],
+            levels: [],
+            levelId: "",
+            userUps: [],
+            discounts: [],
+            threeplay: {
+                id: "", name: "", parm: ""
+            },
+            pages: {
+                all: "", cur: 1, txtpage: ""
+            },
+            searchs: {
+                startTime: "", endTime: "", keyword: ""
+            },
+            adds: {
+                mobile: "", recommendmobile: "", password: "", password1: ""
+            },
+            resetpwds: {
+                mobile: "", password: "", password1: ""
+            },
+            charges: {
+                mobile:"",amount:""
+            }
+        },
+        methods: {
+            getstart: function () {
+                var that = this;
+                that.searchs.startTime = "";
+                laydate({
+                    elem: '#start',
+                    choose: function (date) {
+                        that.searchs.startTime = date;
+                    }
+                });
+            },
+            getend: function () {
+                var that = this;
+                that.searchs.endTime = "";
+                laydate({
+                    elem: '#end',
+                    choose: function (date) {
+                        that.searchs.endTime = date;
+                    }
+                });
+            },
+            getpage: function () {
+                this.$http.post('/admin/user/list', { levelId: this.levelId, keyword: this.searchs.keyword, startTime: this.searchs.startTime, endTime: this.searchs.endTime, pageIndex: this.pages.cur }, { emulateJSON: true }).then(function (result) {
+                    this.users = result.data.data.users;
+                    this.pages.all = result.data.data.pageCount;
+                    this.userUps = result.data.data.userUps;
+                    this.discounts = result.data.data.discounts;
+                    this.threeplay = result.data.data.threePlay;
+                })
+            },
+            pageclick: function (index) {//页码点击事件
+                if (index != this.cur) {
+                    this.pages.cur = index
+                }
+                this.getpage();
+            },
+            go: function () {
+                if (this.pages.txtpage == "") {
+                    return;
+                }
+                else {
+                    this.pages.cur = this.pages.txtpage;
+                }
+                this.getpage();
+            },
+            add: function () {
+                var that = this;
+                layer.open({
+                    type: 1,
+                    title: '添加用户',
+                    maxmin: true,
+                    shadeClose: false, //点击遮罩关闭层
+                    area: ['400px', ''],
+                    content: $('#add'),
+                    btn: ['确认', '取消'],
+                    yes: function (index, layero) {
+                        if (that.adds.mobile == "") {
+                            layer.alert('会员账号不能为空', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        var reg = /^1\d{10}$/;
+                        if (!reg.test(that.adds.mobile)) {
+                            layer.alert('会员账号手机号码格式不正确', { icon: 0, tilte: '提示框' });
+                            return;
+                        }
+                        if (that.adds.recommendmobile == "") {
+                            layer.alert('推荐人账号不能为空', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        if (that.adds.password == "") {
+                            layer.alert('登录密码不能为空', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        if (that.adds.password != that.adds.password1) {
+                            layer.alert('两次输入的密码不一致', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        that.$http.post('/admin/user/add', { mobile: that.adds.mobile, recommendmobile: that.adds.recommendmobile, password: that.adds.password }, { emulateJSON: true }).then(function (result) {
+                            if (result.data.status == 1) {
+                                layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                                layer.close(index);
+                                that.getpage();
+                            }
+                            else if (result.data.status == 0) {
+                                layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            }
+                            else if (result.data.status == 302) {
+                                window.location.href = result.data.data;
+                            }
+                            else if (result.data.status == 401) {
+                                layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            }
+                        });
+                    }
+                });
+            },
+            //upset: function () {
+            //    var that = this;
+            //    var parms = new Array();
+            //    layer.open({
+            //        type: 1,
+            //        title: '升级设置',
+            //        maxmin: true,
+            //        shadeClose: false, //点击遮罩关闭层
+            //        area: ['800px', ''],
+            //        content: $('#upset'),
+            //        btn: ['确认', '取消'],
+            //        yes: function (index, layero) {
+            //            $.each(that.discounts, function (key, val) {
+            //                parms.push(val);
+            //            });
+            //            $.each(that.userUps, function (key, val) {
+            //                parms.push(val);
+            //            });
+            //            parms.push(that.threeplay);
+            //            that.$http.post('/admin/user/upset', { settings: parms }, { emulateJSON: true }).then(function (result) {
+            //                if (result.data.status == 1) {
+            //                    layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+            //                    layer.close(index);
+            //                    that.getpage();
+            //                }
+            //                else if (result.data.status == 0) {
+            //                    layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+            //                }
+            //                else if (result.data.status == 302) {
+            //                    window.location.href = result.data.data;
+            //                }
+            //                else if (result.data.status == 401) {
+            //                    layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+            //                }
+            //            });
+            //        }
+            //    });
+            //},
+            resetpwd: function (id, mobile) {
+                var that = this;
+                this.resetpwds.mobile = mobile;
+                layer.open({
+                    type: 1,
+                    title: '重置密码',
+                    maxmin: true,
+                    shadeClose: false, //点击遮罩关闭层
+                    area: ['400px', ''],
+                    content: $('#resetpwd'),
+                    btn: ['确认', '取消'],
+                    yes: function (index, layero) {
+                        if (that.resetpwds.password == "") {
+                            layer.alert('密码不能为空', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        if (that.resetpwds.password != that.resetpwds.password1) {
+                            layer.alert('两次输入的密码不一致', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        that.$http.post('/admin/user/resetpwd', { id: id, password: that.resetpwds.password }, { emulateJSON: true }).then(function (result) {
+                            if (result.data.status == 1) {
+                                layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                                layer.close(index);
+                                that.getpage();
+                            }
+                            else if (result.data.status == 0) {
+                                layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            }
+                            else if (result.data.status == 302) {
+                                window.location.href = result.data.data;
+                            }
+                            else if (result.data.status == 401) {
+                                layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            }
+                        });
+                    }
+                });
+            },
+            frozen: function (id, isenabled) {
+                var that = this;
+                var msg = '会员冻结后将无法登陆商城，确认冻结吗？';
+                var msg1 = '是否冻结会员';
+                if (!isenabled) {
+                    msg = '确认解冻会员账号吗？';
+                    msg1 = '是否冻结会员';
+                }
+                layer.confirm(msg, { icon: 0, title: msg1 }, function () {
+                    that.$http.post('/admin/user/frozen', { id: id }, { emulateJSON: true }).then(function (result) {
+                        if (result.data.status == 1) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            that.getpage();
+                        }
+                        else if (result.data.status == 0) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                        else if (result.data.status == 302) {
+                            window.location.href = result.data.data;
+                        }
+                        else if (result.data.status == 401) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                    });
+                });
+            },
+            del: function (id) {
+                var that = this;
+                layer.confirm("会员删除后无法恢复，确认删除吗？", { icon: 0, title: '是否删除会员' }, function (index) {
+                    that.$http.post('/admin/user/delete', { id: id }, { emulateJSON: true }).then(function (result) {
+                        if (result.data.status == 1) {
+                            layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                            that.getpage();
+                        }
+                        else if (result.data.status == 0) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                        else if (result.data.status == 302) {
+                            window.location.href = result.data.data;
+                        }
+                        else if (result.data.status == 401) {
+                            layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                        }
+                    });
+                });
+            },
+            search: function () {
+                this.getpage();
+            },
+            charge: function (id,mobile) {
+                var that = this;
+                that.charges.mobile = mobile;
+                layer.open({
+                    type: 1,
+                    title: '添加用户',
+                    maxmin: true,
+                    shadeClose: false, //点击遮罩关闭层
+                    area: ['400px', ''],
+                    content: $('#charge'),
+                    btn: ['确认', '取消'],
+                    yes: function (index, layero) {
+                        if (that.charges.amount == "") {
+                            layer.alert('金额不能为空', { icon: 0, title: '提示框' });
+                            return;
+                        }
+                        that.$http.post('/admin/user/charge', { id: id, amount: that.charges.amount }, { emulateJSON: true }).then(function (result) {
+                            if (result.data.status == 1) {
+                                layer.alert(result.data.msg, { icon: 6, title: '提示框' });
+                                layer.close(index);
+                                that.getpage();
+                            }
+                            else if (result.data.status == 0) {
+                                layer.alert(result.data.msg, { icon: 0, title: '提示框' });
+                            }
+                            else if (result.data.status == 302) {
+                                window.location.href = result.data.data;
+                            }
+                        });
+                    }
+                });
+            }
+        },
+        computed: {
+            indexs: function () {
+                var count = 0;
+                var left = 1;
+                var right = this.pages.all;
+                var ar = [];
+                if (this.pages.all >= 5) {
+                    if (this.pages.cur > 3 && this.pages.cur < this.pages.all - 2) {
+                        left = Number(this.pages.cur) - 2;
+                        right = Number(this.pages.cur) + 2;
+                    } else {
+                        if (this.pages.cur <= 3) {
+                            left = 1
+                            right = 5
+                        } else {
+                            right = this.pages.all
+                            left = Number(this.pages.all) - 4
+                        }
+                    }
+                }
+                while (left <= right) {
+                    ar.push(left)
+                    left++
+                }
+                return ar
+            }
+        },
+        mounted: function () {
+            this.$http.post('/admin/user/list', { levelId: this.levelId, keyword: this.searchs.keyword, startTime: this.searchs.startTime, endTime: this.searchs.endTime, pageIndex: this.pages.cur }, { emulateJSON: true }).then(function (result) {
+                this.users = result.data.data.users;
+                this.pages.all = result.data.data.pageCount;
+                this.levels = result.data.data.levels;
+                this.userUps = result.data.data.userUps;
+                this.discounts = result.data.data.discounts;
+                this.threeplay = result.data.data.threePlay;
+            })
+        }
+    });
+
+    laydate({
+        elem: '#start',
+        event: 'focus'
+    });
+    laydate({
+        elem: '#end',
+        event: 'focus'
+    });
+</script>
