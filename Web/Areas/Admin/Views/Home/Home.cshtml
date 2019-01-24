@@ -45,7 +45,7 @@
             <button type="button" class="close" data-dismiss="alert"><i class="icon-remove"></i></button>
             <i class="icon-ok green"></i>欢迎使用<strong class="green">后台管理系统<small></small></strong>
         </div>*@
-        <div style="margin-top:50px;margin-bottom:80px;" class="state-overview clearfix">
+        <div style="margin-top:50px;margin-bottom:10px;" class="state-overview clearfix">
             <div class="col-lg-3 col-sm-6">
                 <section class="panel">
                     <a href="#" title="商城会员">
@@ -91,7 +91,21 @@
                         <p>今日交易总额</p>
                     </div>
                 </section>
-            </div>            
+            </div>
+        </div>
+
+        <div style="margin-top:10px;margin-bottom:10px;" class="state-overview clearfix">            
+            <div class="col-lg-3 col-sm-6">
+                <section class="panel">
+                    <div class="symbol blue">
+                        <i class="icon-bar-chart"></i>
+                    </div>
+                    <div class="value">
+                        <h1>@Model.TotalBonusAmount</h1>
+                        <p>系统佣金总额</p>
+                    </div>
+                </section>
+            </div>
         </div>
         <!--实时交易记录-->
         <div class="clearfix">

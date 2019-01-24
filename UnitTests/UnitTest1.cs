@@ -14,20 +14,23 @@ namespace UnitTests
         private OrderApplyService orderApplyService = new OrderApplyService();
         private UserService userService = new UserService();
         private TakeCashService takeCashService = new TakeCashService();
+        private BonusService bonusService = new BonusService();
         [TestMethod]
         public async Task TestMethod1()
         {
-            //long userId = 7;
-            //int num = 2;
-            //var carid = await goodsCarService.AddAsync(userId, 4, num);
+            //long userId = 70;
+            //int num = 10;
+            //var carid = await goodsCarService.AddAsync(userId, 88, num);
             //await goodsCarService.UpdateAsync(carid, num, true);
             //var res = await goodsCarService.GetModelListAsync(userId);
             //await orderApplyService.AddAsync(res);
             //var dtos = await orderApplyService.GetModelListAsync(userId);
-            //long id = await orderService.AddAsync(null, 0, userId, 124, 1, 1, dtos.OrderApplies);
+            //long id = await orderService.AddAsync(null, 0, userId, 196, 1, 1, dtos.OrderApplies);
             //await goodsCarService.DeleteListAsync(userId);
             //await orderApplyService.DeleteListAsync(userId);
-            await userService.WeChatPayAsync("dd201901172022586787570");
+            //await userService.WeChatPayAsync("dd201901231734421629687");
+            //var res = await userService.GetLevelDataAsync();
+            await bonusService.CalcShareBonusAsync(10000);
         }
         //[TestMethod]
         //public async Task TestMethod()

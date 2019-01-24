@@ -286,6 +286,7 @@
     <Content Include="images\del.png" />
     <Content Include="images\upload.png" />
     <Content Include="images\headpic.png" />
+    <None Include="js\areas.json" />
     <Content Include="js\jquery.cookie.js" />
     <Content Include="js\jquery.uploadimg.js" />
     <Content Include="js\my_pagination.js" />

@@ -15,7 +15,7 @@ namespace IMS.IService
         /// <returns></returns>
         Task<long> AddAsync(string mobile, string password,string tradePassword, int levelTypeId, string recommendCode, string nickName, string avatarUrl);
         Task<bool> AddAmountAsync(string mobile,decimal amount);
-        Task<bool> ChargeAsync(long id,decimal amount);
+        Task<int> ChargeAsync(long id,int type,decimal amount);
         /// <summary>
         /// 修改头像，昵称
         /// </summary>
@@ -64,6 +64,7 @@ namespace IMS.IService
         Task<CalcAmountResult> CalcCount();
         Task<decimal> GetTeamBuyAmountAsync(long id);
         decimal GetTeamBuyAmount(long id);
+        Task<CalcLevelDataModel[]> GetLevelDataAsync();
         /// <summary>
         /// 根据id获得用户模型
         /// </summary>
@@ -120,5 +121,10 @@ namespace IMS.IService
         public decimal TotalAmount { get; set; }
         public decimal TotalTakeCash { get; set; }
         public decimal TotalBuyAmount { get; set; }
+    }
+    public class CalcLevelDataModel
+    {
+        public string Name { get; set; }
+        public int Count { get; set; }
     }
 }

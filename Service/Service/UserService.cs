@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using static IMS.Common.Enums.MyEnumHelper;
 
 namespace IMS.Service.Service
 {
@@ -133,18 +134,53 @@ namespace IMS.Service.Service
             }
         }
 
-        public async Task<bool> ChargeAsync(long id, decimal amount)
+        public async Task<int> ChargeAsync(long id, int type, decimal amount)
         {
             using (MyDbContext dbc = new MyDbContext())
             {
                 UserEntity user = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == id);
                 if (user == null)
                 {
-                    return false;
+                    return -1;
                 }
-                user.Amount = user.Amount + amount;
+                if(type==1)
+                {
+                    user.Amount = user.Amount + amount;
+                    user.BonusAmount = user.BonusAmount + amount;
+
+                    JournalEntity journal = new JournalEntity();
+                    journal.UserId = user.Id;
+                    journal.BalanceAmount = user.Amount;
+                    journal.InAmount = amount;
+                    journal.Remark = "后台增加用户(" + user.Mobile + ")余额";
+                    journal.JournalTypeId = (int)JournalTypeEnum.后台充值;
+                    journal.OrderCode = "";
+                    journal.GoodsId = 0;//来至订单ID
+                    journal.CurrencyType = 1;//币种,只有rmb
+                    dbc.Journals.Add(journal);
+                }
+                else
+                {
+                    if (user.Amount < amount)
+                    {
+                        return -2;
+                    }
+                    user.Amount = user.Amount - amount;
+                    user.BonusAmount = user.BonusAmount - amount;
+
+                    JournalEntity journal = new JournalEntity();
+                    journal.UserId = user.Id;
+                    journal.BalanceAmount = user.Amount;
+                    journal.InAmount = amount;
+                    journal.Remark = "后台扣除用户(" + user.Mobile + ")余额";
+                    journal.JournalTypeId = (int)JournalTypeEnum.后台充值;
+                    journal.OrderCode = "";
+                    journal.GoodsId = 0;//来至订单ID
+                    journal.CurrencyType = 1;//币种,只有rmb
+                    dbc.Journals.Add(journal);
+                }
                 await dbc.SaveChangesAsync();
-                return true;
+                return 1;
             }
         }
 
@@ -492,52 +528,56 @@ namespace IMS.Service.Service
             int recCount;
             //直推会员购买订单数量
             int recOrderCount;
-            var res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id);
-            if (await res.CountAsync() <= 0)
-            {
-                recCount = 0;
-                recOrderCount = 0;
-            }
-            else
-            {
-                recCount = await res.CountAsync(u => u.LevelId == (int)LevelEnum.会员);
-                recOrderCount = await res.SumAsync(u => u.OrderCount);
-            }
             //升级条件1
             decimal term1;
             //升级条件2
             decimal term2;
+            decimal term3;
             //升级会员
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "会员升级条件" && s.LevelId == 1, s => s.Param), out term1);
             if (order.Amount < term1)
             {
                 return;
             }
-            if (recCount <= 0)
+            user.LevelId = (int)LevelEnum.会员;
+            user.BuyType = (int)BuyTypeEnum.首次购买;
+
+            var res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id);
+            if (await res.CountAsync() <= 0)
             {
-                user.LevelId = (int)LevelEnum.会员;
-                user.BuyType = (int)BuyTypeEnum.首次购买;
-                await dbc.SaveChangesAsync();
-            }
-            else
-            {
-                //升级银卡会员
+                recCount = 0;
+                recOrderCount = 0;
+                //升级银卡会员   
                 decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "银卡会员升级条件" && s.LevelId == 1, s => s.Param), out term2);
-                if (recCount >= term2)
+                if (order.Amount >= term2)
                 {
                     user.LevelId = (int)LevelEnum.银卡会员;
                     user.BuyType = (int)BuyTypeEnum.首次购买;
                 }
-
-                //升级黄金会员
-                decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "黄金会员升级条件" && s.LevelId == 1, s => s.Param), out term2);
-                if (recOrderCount >= term2)
-                {
-                    user.LevelId = (int)LevelEnum.黄金会员;
-                    user.BuyType = (int)BuyTypeEnum.首次购买;
-                }                
-                await dbc.SaveChangesAsync();
             }
+            else
+            {
+                recCount = await res.CountAsync(u => u.LevelId == (int)LevelEnum.会员);
+                recOrderCount = await res.SumAsync(u => u.OrderCount);
+            }
+
+            //升级银卡会员            
+            decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "银卡会员升级条件" && s.LevelId == 2, s => s.Param), out term3);
+            
+            if (recCount >= term3)
+            {
+                user.LevelId = (int)LevelEnum.银卡会员;
+                user.BuyType = (int)BuyTypeEnum.首次购买;
+            }
+
+            //升级黄金会员
+            decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "黄金会员升级条件" && s.LevelId == 1, s => s.Param), out term2);
+            if (recOrderCount >= term2)
+            {
+                user.LevelId = (int)LevelEnum.黄金会员;
+                user.BuyType = (int)BuyTypeEnum.首次购买;
+            }
+            await dbc.SaveChangesAsync();
         }
         //会员升级
         private async Task MemberLevelUpAsync(MyDbContext dbc, UserEntity user)
@@ -550,15 +590,15 @@ namespace IMS.Service.Service
             decimal term;
 
             //升级银卡会员
-            decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "银卡会员升级条件" && s.LevelId == 1, s => s.Param), out term);
-            if (recCount >= term)
+            decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "银卡会员升级条件" && s.LevelId == 2, s => s.Param), out term);
+            if (recCount >= term && user.LevelId< (int)LevelEnum.银卡会员)
             {
                 user.LevelId = (int)LevelEnum.银卡会员;
             }
 
             //升级黄金会员
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "黄金会员升级条件" && s.LevelId == 1, s => s.Param), out term);
-            if (recOrderCount >= term)
+            if (recOrderCount >= term && user.LevelId < (int)LevelEnum.黄金会员)
             {
                 user.LevelId = (int)LevelEnum.黄金会员;
             }
@@ -574,7 +614,7 @@ namespace IMS.Service.Service
 
             //升级黄金会员
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "黄金会员升级条件" && s.LevelId == 1, s => s.Param), out term);
-            if (recOrderCount >= term)
+            if (recOrderCount >= term && user.LevelId < (int)LevelEnum.黄金会员)
             {
                 user.LevelId = (int)LevelEnum.黄金会员;
             }
@@ -587,6 +627,9 @@ namespace IMS.Service.Service
             int recCount = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id && u.LevelId == (int)LevelEnum.黄金会员).CountAsync();
             //市场业绩
             decimal teamScore;
+            //最大业绩
+            decimal maxScore;
+            IQueryable<UserEntity> res;
             string keyword;
             //升级条件1
             decimal term1;
@@ -595,12 +638,18 @@ namespace IMS.Service.Service
             if (user.UserCode == "system")
             {
                 keyword = (user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
             else
             {
                 keyword = ("-" + user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
 
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "钻石会员升级条件" && s.LevelId == 1, s => s.Param), out term1);
@@ -614,7 +663,10 @@ namespace IMS.Service.Service
             {
                 return;
             }
-            user.LevelId = (int)LevelEnum.钻石会员;
+            if(user.LevelId < (int)LevelEnum.钻石会员)
+            {
+                user.LevelId = (int)LevelEnum.钻石会员;
+            }
             await dbc.SaveChangesAsync();
         }
         //钻石会员升级
@@ -624,6 +676,9 @@ namespace IMS.Service.Service
             int recCount = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id && u.LevelId == (int)LevelEnum.钻石会员).CountAsync();
             //市场业绩
             decimal teamScore;
+            //最大业绩
+            decimal maxScore;
+            IQueryable<UserEntity> res;
             string keyword;
             //升级条件1
             decimal term1;
@@ -632,12 +687,18 @@ namespace IMS.Service.Service
             if (user.UserCode == "system")
             {
                 keyword = (user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
             else
             {
                 keyword = ("-" + user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
 
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "至尊会员升级条件" && s.LevelId == 1, s => s.Param), out term1);
@@ -651,7 +712,10 @@ namespace IMS.Service.Service
             {
                 return;
             }
-            user.LevelId = (int)LevelEnum.至尊会员;
+            if (user.LevelId < (int)LevelEnum.至尊会员)
+            {
+                user.LevelId = (int)LevelEnum.至尊会员;
+            }
             await dbc.SaveChangesAsync();
         }
         //至尊会员升级
@@ -661,6 +725,9 @@ namespace IMS.Service.Service
             int recCount = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id && u.LevelId == (int)LevelEnum.至尊会员).CountAsync();
             //市场业绩
             decimal teamScore;
+            //最大业绩
+            decimal maxScore;
+            IQueryable<UserEntity> res;
             string keyword;
             //升级条件1
             decimal term1;
@@ -669,12 +736,18 @@ namespace IMS.Service.Service
             if (user.UserCode == "system")
             {
                 keyword = (user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
             else
             {
                 keyword = ("-" + user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
 
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "皇冠会员升级条件" && s.LevelId == 1, s => s.Param), out term1);
@@ -688,7 +761,10 @@ namespace IMS.Service.Service
             {
                 return;
             }
-            user.LevelId = (int)LevelEnum.皇冠会员;
+            if (user.LevelId < (int)LevelEnum.皇冠会员)
+            {
+                user.LevelId = (int)LevelEnum.皇冠会员;
+            }
             await dbc.SaveChangesAsync();
         }
         //皇冠会员升级
@@ -698,6 +774,9 @@ namespace IMS.Service.Service
             int recCount = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendId == user.Id && u.LevelId == (int)LevelEnum.皇冠会员).CountAsync();
             //市场业绩
             decimal teamScore;
+            //最大业绩
+            decimal maxScore;
+            IQueryable<UserEntity> res;
             string keyword;
             //升级条件1
             decimal term1;
@@ -706,12 +785,18 @@ namespace IMS.Service.Service
             if (user.UserCode == "system")
             {
                 keyword = (user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
             else
             {
                 keyword = ("-" + user.Id + "-").ToString();
-                teamScore = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword)).SumAsync(u => u.BuyAmount);
+                res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                teamScore = await res.SumAsync(u => u.BuyAmount);
+                maxScore = await res.MaxAsync(u => u.BuyAmount);
+                teamScore = teamScore - maxScore;
             }
 
             decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "董事会员升级条件" && s.LevelId == 1, s => s.Param), out term1);
@@ -725,7 +810,10 @@ namespace IMS.Service.Service
             {
                 return;
             }
-            user.LevelId = (int)LevelEnum.董事会员;
+            if (user.LevelId < (int)LevelEnum.董事会员)
+            {
+                user.LevelId = (int)LevelEnum.董事会员;
+            }
             await dbc.SaveChangesAsync();
         }
         #endregion
@@ -831,11 +919,89 @@ namespace IMS.Service.Service
             long recommendId = awardRecommendId;
             decimal bonusAmount;
             decimal param;
+            decimal term;
             string res;
+            string res1;
             string settingTypeName;
+            if (recommendId <= 0)
+            {
+                return;
+            }
+            
+            //发放晋级奖励
+            UserEntity recUser = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == recommendId);
+            settingTypeName = GetUpSettingTypeName(recUser.LevelId);
+            if (string.IsNullOrEmpty(settingTypeName))
+            {
+                return;
+            }
+            if (user.BuyType == (int)BuyTypeEnum.首次购买)
+            {
+                res = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == settingTypeName && s.LevelId == (int)BuyTypeEnum.首次购买, s => s.Param);
+                decimal.TryParse(res, out param);
+                bonusAmount = param;
+                recUser.Amount = recUser.Amount + bonusAmount;
+                recUser.BonusAmount = recUser.BonusAmount + bonusAmount;
+
+                BonusEntity bonus = new BonusEntity();
+                bonus.UserId = recUser.Id;
+                bonus.Amount = bonusAmount;
+                bonus.Revenue = 0;
+                bonus.sf = bonusAmount;
+                bonus.TypeID = 5; //5、首购晋级
+                bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购晋级返现";
+                bonus.FromUserID = user.Id;
+                bonus.IsSettled = 1;
+                dbc.Bonus.Add(bonus);
+
+                JournalEntity journal = new JournalEntity();
+                journal.UserId = recUser.Id;
+                journal.BalanceAmount = recUser.Amount;
+                journal.InAmount = bonusAmount;
+                journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购晋级返现";
+                journal.JournalTypeId = (int)JournalTypeEnum.晋级奖;
+                journal.OrderCode = order.Code;
+                journal.GoodsId = order.Id;//来至订单ID
+                journal.CurrencyType = 1;//币种,只有rmb
+                dbc.Journals.Add(journal);
+                await dbc.SaveChangesAsync();
+            }
+            else if (user.BuyType == (int)BuyTypeEnum.再次购买)
+            {
+                res = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == settingTypeName && s.LevelId == (int)BuyTypeEnum.再次购买, s => s.Param);
+                decimal.TryParse(res, out param);
+                bonusAmount = param;
+                recUser.Amount = recUser.Amount + bonusAmount;
+                recUser.BonusAmount = recUser.BonusAmount + bonusAmount;
+
+                BonusEntity bonus = new BonusEntity();
+                bonus.UserId = recUser.Id;
+                bonus.Amount = bonusAmount;
+                bonus.Revenue = 0;
+                bonus.sf = bonusAmount;
+                bonus.TypeID = 6; //6、复购晋级
+                bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购晋级返现";
+                bonus.FromUserID = user.Id;
+                bonus.IsSettled = 1;
+                dbc.Bonus.Add(bonus);
+
+                JournalEntity journal = new JournalEntity();
+                journal.UserId = recUser.Id;
+                journal.BalanceAmount = recUser.Amount;
+                journal.InAmount = bonusAmount;
+                journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购晋级返现";
+                journal.JournalTypeId = (int)JournalTypeEnum.晋级奖;
+                journal.OrderCode = order.Code;
+                journal.GoodsId = order.Id;//来至订单ID
+                journal.CurrencyType = 1;//币种,只有rmb
+                dbc.Journals.Add(journal);
+                await dbc.SaveChangesAsync();
+            }
+            recommendId = recUser.RecommendId;
+
             while (recommendId > 0)
             {
-                UserEntity recUser = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == recommendId);
+                recUser = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == recommendId);
                 settingTypeName = GetUpSettingTypeName(recUser.LevelId);
                 if (string.IsNullOrEmpty(settingTypeName))
                 {
@@ -844,8 +1010,10 @@ namespace IMS.Service.Service
                 if (user.BuyType == (int)BuyTypeEnum.首次购买)
                 {
                     res = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == settingTypeName && s.LevelId == (int)BuyTypeEnum.首次购买, s => s.Param);
+                    res1 = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "管理奖返现比例" && s.LevelId == 1, s => s.Param);
                     decimal.TryParse(res, out param);
-                    bonusAmount = param;
+                    decimal.TryParse(res1, out term);
+                    bonusAmount = param * term / 100;
                     recUser.Amount = recUser.Amount + bonusAmount;
                     recUser.BonusAmount = recUser.BonusAmount + bonusAmount;
 
@@ -854,8 +1022,8 @@ namespace IMS.Service.Service
                     bonus.Amount = bonusAmount;
                     bonus.Revenue = 0;
                     bonus.sf = bonusAmount;
-                    bonus.TypeID = 5; //5、首购晋级
-                    bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购晋级返现";
+                    bonus.TypeID = 7; //7、首购管理
+                    bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购管理返现";
                     bonus.FromUserID = user.Id;
                     bonus.IsSettled = 1;
                     dbc.Bonus.Add(bonus);
@@ -864,8 +1032,8 @@ namespace IMS.Service.Service
                     journal.UserId = recUser.Id;
                     journal.BalanceAmount = recUser.Amount;
                     journal.InAmount = bonusAmount;
-                    journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购晋级返现";
-                    journal.JournalTypeId = (int)JournalTypeEnum.晋级奖;
+                    journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得首购管理返现";
+                    journal.JournalTypeId = (int)JournalTypeEnum.管理奖;
                     journal.OrderCode = order.Code;
                     journal.GoodsId = order.Id;//来至订单ID
                     journal.CurrencyType = 1;//币种,只有rmb
@@ -875,8 +1043,10 @@ namespace IMS.Service.Service
                 else if (user.BuyType == (int)BuyTypeEnum.再次购买)
                 {
                     res = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == settingTypeName && s.LevelId == (int)BuyTypeEnum.再次购买, s => s.Param);
+                    res1 = await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "管理奖返现比例" && s.LevelId == 1, s => s.Param);
                     decimal.TryParse(res, out param);
-                    bonusAmount = param;
+                    decimal.TryParse(res1, out term);
+                    bonusAmount = param * term / 100;
                     recUser.Amount = recUser.Amount + bonusAmount;
                     recUser.BonusAmount = recUser.BonusAmount + bonusAmount;
 
@@ -885,8 +1055,8 @@ namespace IMS.Service.Service
                     bonus.Amount = bonusAmount;
                     bonus.Revenue = 0;
                     bonus.sf = bonusAmount;
-                    bonus.TypeID = 6; //2、复购晋级
-                    bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购晋级返现";
+                    bonus.TypeID = 8; //8、复购管理
+                    bonus.Source = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购管理返现";
                     bonus.FromUserID = user.Id;
                     bonus.IsSettled = 1;
                     dbc.Bonus.Add(bonus);
@@ -895,8 +1065,8 @@ namespace IMS.Service.Service
                     journal.UserId = recUser.Id;
                     journal.BalanceAmount = recUser.Amount;
                     journal.InAmount = bonusAmount;
-                    journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购晋级返现";
-                    journal.JournalTypeId = (int)JournalTypeEnum.晋级奖;
+                    journal.Remark = "用户(" + user.Mobile + ")购买商品,用户(" + recUser.Mobile + ")获得复购管理返现";
+                    journal.JournalTypeId = (int)JournalTypeEnum.管理奖;
                     journal.OrderCode = order.Code;
                     journal.GoodsId = order.Id;//来至订单ID
                     journal.CurrencyType = 1;//币种,只有rmb
@@ -1315,6 +1485,23 @@ namespace IMS.Service.Service
                 //}
                 //return recommends.Include(r => r.User).Sum(r => r.User.BuyAmount);
                 return 0;
+            }
+        }
+
+        public async Task<CalcLevelDataModel[]> GetLevelDataAsync()
+        {
+            using (MyDbContext dbc = new MyDbContext())
+            {
+                var res = MyEnumHelper.GetEnumList<LevelEnum>();
+                List<CalcLevelDataModel> list = new List<CalcLevelDataModel>();
+                foreach (var item in res)
+                {
+                    CalcLevelDataModel model = new CalcLevelDataModel();
+                    model.Name = item.name;
+                    model.Count = await dbc.GetAll<UserEntity>().AsNoTracking().CountAsync(a=>a.LevelId==item.id);
+                    list.Add(model);
+                }
+                return list.ToArray();
             }
         }
 

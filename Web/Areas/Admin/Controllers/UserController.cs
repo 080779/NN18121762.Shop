@@ -80,11 +80,24 @@ namespace IMS.Web.Areas.Admin.Controllers
         }
         
         [HttpPost]
-        public async Task<ActionResult> Charge(long id,decimal amount)
+        public async Task<ActionResult> Charge(long id,int type,string amount)
         {
-            var res = await userService.ChargeAsync(id,amount);
-            if(!res)
+            decimal Amount;
+            if(!decimal.TryParse(amount, out Amount))
             {
+                return Json(new AjaxResult { Status = 0, Msg = "请输入数字" });
+            }
+            if(Amount < 0)
+            {
+                return Json(new AjaxResult { Status = 0, Msg = "金额不能小于零" });
+            }
+            var res = await userService.ChargeAsync(id,type,Amount);
+            if(res<=0)
+            {
+                if (res == -2)
+                {
+                    return Json(new AjaxResult { Status = 0, Msg = "余额不足" });
+                }
                 return Json(new AjaxResult { Status = 0, Msg = "充值失败" });
             }
             return Json(new AjaxResult { Status = 1, Msg = "充值成功" });

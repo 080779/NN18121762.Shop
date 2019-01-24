@@ -64,7 +64,7 @@ namespace Web
 
             JobDetailImpl jobAutoConfirm = new JobDetailImpl("jobAutoConfirm", typeof(AutoConfirmJob));
             CalendarIntervalScheduleBuilder builder = CalendarIntervalScheduleBuilder.Create();
-            builder.WithInterval(2, IntervalUnit.Minute);
+            builder.WithInterval(10, IntervalUnit.Minute);
             IMutableTrigger triggerAutoConfirm = builder.Build();
             triggerAutoConfirm.Key = new TriggerKey("triggerAutoConfirm");
             sched.ScheduleJob(jobAutoConfirm, triggerAutoConfirm); 

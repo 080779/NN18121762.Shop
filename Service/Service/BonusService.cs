@@ -136,11 +136,14 @@ namespace IMS.Service.Service
         {
             using (MyDbContext dbc = new MyDbContext())
             {
+                decimal teamScore;
+                IQueryable<UserEntity> res;
+                string keyword;
                 decimal term;
                 int levelId;
                 int count;
                 decimal bonusAmount;
-                //decimal totalScore = await dbc.GetAll<UserEntity>().AsNoTracking().SumAsync(u => u.Amount);
+                decimal totalBuyAmount = 0;
                 IQueryable<UserEntity> users;
                 //皇冠会员
                 users = dbc.GetAll<UserEntity>().Where(u => u.LevelId == (int)LevelEnum.皇冠会员);
@@ -149,68 +152,128 @@ namespace IMS.Service.Service
                 {
                     levelId = 1;
                     decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "全国分红" && s.LevelId == levelId, s => s.Param), out term);
-                    bonusAmount = totalScore * (term / 100) / count;
                     foreach (UserEntity user in await users.ToListAsync())
                     {
-                        user.Amount = user.Amount + bonusAmount;
-
-                        BonusEntity bonus = new BonusEntity();
-                        bonus.UserId = user.Id;
-                        bonus.Amount = bonusAmount;
-                        bonus.Revenue = 0;
-                        bonus.sf = bonusAmount;
-                        bonus.TypeID = 5; //5、分红
-                        bonus.Source = "用户(" + user.Mobile + ")获得全国分红";
-                        bonus.FromUserID = user.Id;
-                        bonus.IsSettled = 1;
-                        dbc.Bonus.Add(bonus);
-
-                        JournalEntity journal = new JournalEntity();
-                        journal.UserId = user.Id;
-                        journal.BalanceAmount = user.Amount;
-                        journal.InAmount = bonusAmount;
-                        journal.Remark = "用户(" + user.Mobile + ")获得全国分红";
-                        journal.JournalTypeId = (int)JournalTypeEnum.全国分红;
-                        //journal.OrderCode = order.Code;
-                        //journal.GoodsId = order.Id;//来至订单ID
-                        journal.CurrencyType = 1;//币种,只有rmb
-                        dbc.Journals.Add(journal);
+                        if (user.UserCode == "system")
+                        {
+                            keyword = (user.Id + "-").ToString();
+                            res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                            teamScore = await res.SumAsync(u => u.BuyAmount);
+                            user.FrozenAmount = teamScore;
+                        }
+                        else
+                        {
+                            keyword = ("-" + user.Id + "-").ToString();
+                            res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                            teamScore = await res.SumAsync(u => u.BuyAmount);
+                            user.FrozenAmount = teamScore;
+                        }
+                        if (user.FrozenAmount >= 100000)
+                        {
+                            totalBuyAmount = totalBuyAmount + ((int)Math.Truncate(user.FrozenAmount)) / 100000 * 100000;
+                        }
+                        await dbc.SaveChangesAsync();
                     }
+                    if(totalBuyAmount>=100000)
+                    {
+                        foreach (UserEntity user in await users.ToListAsync())
+                        {
+                            if(user.FrozenAmount<100000)
+                            {
+                                continue;
+                            }
+                            bonusAmount = totalScore * (term / 100) * (((int)Math.Truncate(user.FrozenAmount)) /100000 * 100000 / totalBuyAmount);
+                            user.Amount = user.Amount + bonusAmount;
+                            user.BonusAmount = user.BonusAmount + bonusAmount;
+
+                            BonusEntity bonus = new BonusEntity();
+                            bonus.UserId = user.Id;
+                            bonus.Amount = bonusAmount;
+                            bonus.Revenue = 0;
+                            bonus.sf = bonusAmount;
+                            bonus.TypeID = 5; //5、分红
+                            bonus.Source = "用户(" + user.Mobile + ")获得全国分红";
+                            bonus.FromUserID = user.Id;
+                            bonus.IsSettled = 1;
+                            dbc.Bonus.Add(bonus);
+
+                            JournalEntity journal = new JournalEntity();
+                            journal.UserId = user.Id;
+                            journal.BalanceAmount = user.Amount;
+                            journal.InAmount = bonusAmount;
+                            journal.Remark = "用户(" + user.Mobile + ")获得全国分红";
+                            journal.JournalTypeId = (int)JournalTypeEnum.全国分红;
+                            //journal.OrderCode = order.Code;
+                            //journal.GoodsId = order.Id;//来至订单ID
+                            journal.CurrencyType = 1;//币种,只有rmb
+                            dbc.Journals.Add(journal);
+                        }
+                    }                    
                 }
                 users = dbc.GetAll<UserEntity>().Where(u => u.LevelId == (int)LevelEnum.董事会员);
                 count = await users.CountAsync();
+                totalBuyAmount = 0;
                 if (count > 0)
                 {
                     levelId = 2;
                     decimal.TryParse(await dbc.GetStringPropertyAsync<SettingEntity>(s => s.TypeName == "全国分红" && s.LevelId == levelId, s => s.Param), out term);
-                    bonusAmount = totalScore * (term / 100) / count;
                     foreach (UserEntity user in await users.ToListAsync())
                     {
-                        user.Amount = user.Amount + bonusAmount;
-                        user.BonusAmount = user.BonusAmount + bonusAmount;
-
-                        BonusEntity bonus = new BonusEntity();
-                        bonus.UserId = user.Id;
-                        bonus.Amount = bonusAmount;
-                        bonus.Revenue = 0;
-                        bonus.sf = bonusAmount;
-                        bonus.TypeID = 5; //5、分红
-                        bonus.Source = "用户(" + user.Mobile + ")获得全国分红";
-                        bonus.FromUserID = user.Id;
-                        bonus.IsSettled = 1;
-                        dbc.Bonus.Add(bonus);
-
-                        JournalEntity journal = new JournalEntity();
-                        journal.UserId = user.Id;
-                        journal.BalanceAmount = user.Amount;
-                        journal.InAmount = bonusAmount;
-                        journal.Remark = "用户(" + user.Mobile + ")获得全国分红";
-                        journal.JournalTypeId = (int)JournalTypeEnum.全国分红;
-                        //journal.OrderCode = order.Code;
-                        //journal.GoodsId = order.Id;//来至订单ID
-                        journal.CurrencyType = 1;//币种,只有rmb
-                        dbc.Journals.Add(journal);
+                        if (user.UserCode == "system")
+                        {
+                            keyword = (user.Id + "-").ToString();
+                            res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                            teamScore = await res.SumAsync(u => u.BuyAmount);
+                            user.FrozenAmount = teamScore;
+                        }
+                        else
+                        {
+                            keyword = ("-" + user.Id + "-").ToString();
+                            res = dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.RecommendPath.Contains(keyword));
+                            teamScore = await res.SumAsync(u => u.BuyAmount);
+                            user.FrozenAmount = teamScore;
+                        }
+                        if (user.BuyAmount >= 100000)
+                        {
+                            totalBuyAmount = totalBuyAmount + ((int)Math.Truncate(user.FrozenAmount)) / 100000 * 100000;
+                        }
+                        await dbc.SaveChangesAsync();
                     }
+                    if (totalBuyAmount >= 100000)
+                    {
+                        foreach (UserEntity user in await users.ToListAsync())
+                        {
+                            if (user.FrozenAmount < 100000)
+                            {
+                                continue;
+                            }
+                            bonusAmount = totalScore * (term / 100) * (((int)Math.Truncate(user.FrozenAmount)) / 100000 * 100000 / totalBuyAmount);
+                            user.Amount = user.Amount + bonusAmount;
+                            user.BonusAmount = user.BonusAmount + bonusAmount;
+
+                            BonusEntity bonus = new BonusEntity();
+                            bonus.UserId = user.Id;
+                            bonus.Amount = bonusAmount;
+                            bonus.Revenue = 0;
+                            bonus.sf = bonusAmount;
+                            bonus.TypeID = 5; //5、分红
+                            bonus.Source = "用户(" + user.Mobile + ")获得全国分红";
+                            bonus.FromUserID = user.Id;
+                            bonus.IsSettled = 1;
+                            dbc.Bonus.Add(bonus);
+
+                            JournalEntity journal = new JournalEntity();
+                            journal.UserId = user.Id;
+                            journal.BalanceAmount = user.Amount;
+                            journal.InAmount = bonusAmount;
+                            journal.Remark = "用户(" + user.Mobile + ")获得全国分红";
+                            journal.JournalTypeId = (int)JournalTypeEnum.全国分红;
+                            //journal.OrderCode = order.Code;
+                            //journal.GoodsId = order.Id;//来至订单ID
+                            journal.CurrencyType = 1;//币种,只有rmb
+                            dbc.Journals.Add(journal);
+                        }
+                    }                       
                 }
                 await dbc.SaveChangesAsync();
                 return true;                

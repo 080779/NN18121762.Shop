@@ -23,7 +23,7 @@ namespace IMS.Web.Areas.Admin.Controllers
             var df = HttpClientHelper.BuildParam(w);
             return View();
         }
-
+        [AllowAnonymous]
         public ActionResult Index()
         {
             return View();

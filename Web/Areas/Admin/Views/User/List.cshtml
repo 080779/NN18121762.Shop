@@ -90,7 +90,7 @@
                             <a v-on:click="resetpwd(user.id,user.mobile)" href="javascript:;" title="重置密码" class="btn btn-xs btn-success">重置密码</a>
                             <a v-on:click="frozen(user.id,user.isEnabled)" href="javascript:;" title="冻结用户" class="btn btn-xs btn-success" v-html="user.isEnabled?'冻结用户':'解冻用户'"></a>
                             <a title="删除用户" href="javascript:;" v-on:click="del(user.id)" class="btn btn-xs btn-warning">删除用户</a>
-                            <!--<a href="javascript:;" v-on:click="charge(user.id,user.mobile)" class="btn btn-xs btn-warning">充值</a>-->
+                            <a href="javascript:;" v-on:click="charge(user.id,user.mobile)" class="btn btn-xs btn-warning">充值</a>
                         </td>
                     </tr>
                 </tbody>
@@ -153,6 +153,11 @@
         <div class="add_menber" id="charge" style="display:none">
             <ul class="page-content">
                 <li><label class="label_name">会员账号：</label><span class="add_name" v-html="charges.mobile"></span><div class="prompt r_f"></div></li>
+                <li>
+                    <label class="label_name">类型：</label>
+                    <input type="radio" name="charge" v-model="charges.type" value="1" checked=checked id="charge1" /><label for="charge1">增加</label>
+                    <input type="radio" name="charge" v-model="charges.type" value="0" id="charge0" /><label for="charge0">扣除</label>
+                </li>
                 <li><label class="label_name">金额：</label><span class="add_name"><input placeholder="金额" type="text" v-model="charges.amount" class="text_add" /></span><div class="prompt r_f"></div></li>
             </ul>
         </div>
@@ -186,7 +191,7 @@
                 mobile: "", password: "", password1: ""
             },
             charges: {
-                mobile:"",amount:""
+                mobile: "", amount: "", type: 1
             }
         },
         methods: {
@@ -411,9 +416,11 @@
             search: function () {
                 this.getpage();
             },
-            charge: function (id,mobile) {
+            charge: function (id, mobile) {
                 var that = this;
                 that.charges.mobile = mobile;
+                that.charges.type = 1;
+                that.charges.amount = "";
                 layer.open({
                     type: 1,
                     title: '添加用户',
@@ -427,7 +434,7 @@
                             layer.alert('金额不能为空', { icon: 0, title: '提示框' });
                             return;
                         }
-                        that.$http.post('/admin/user/charge', { id: id, amount: that.charges.amount }, { emulateJSON: true }).then(function (result) {
+                        that.$http.post('/admin/user/charge', { id: id, type: that.charges.type, amount: that.charges.amount }, { emulateJSON: true }).then(function (result) {
                             if (result.data.status == 1) {
                                 layer.alert(result.data.msg, { icon: 6, title: '提示框' });
                                 layer.close(index);

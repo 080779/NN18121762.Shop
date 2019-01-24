@@ -187,8 +187,10 @@ namespace Test
 
         static void Main(string[] args)
         {
-            decimal d = 7;
-            Console.WriteLine((d*10)/100);
+            decimal d = (decimal)5156001.11;
+            int i = (int)Math.Truncate(d);
+
+            Console.WriteLine(i/100000*100000);
             
             Console.ReadKey();
         }

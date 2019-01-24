@@ -82,7 +82,7 @@ namespace IMS.Web.Controllers
             object obj = CacheHelper.GetCache("App_User_SendMsg" + model.Mobile);
             if (obj == null)
             {
-                return new ApiResult { status = 0, msg = "注册手机号不一致" };
+                return new ApiResult { status = 0, msg = "手机号未获取验证码" };
             }
             if (obj.ToString() != model.Code)
             {
@@ -255,7 +255,7 @@ namespace IMS.Web.Controllers
             string stateCode = CommonHelper.SendMessage2(model.Mobile, content, out state, out msgState);
             await messageService.AddAsync(0, model.Mobile, content + "," + msgState, Convert.ToInt32(state));
             //UserSendMsgCacheModel cacheModel = new UserSendMsgCacheModel();
-            CacheHelper.SetCache("App_User_SendMsg" + model.Mobile, code, DateTime.UtcNow.AddMinutes(2), TimeSpan.Zero);
+            CacheHelper.SetCache("App_User_SendMsg" + model.Mobile, code, DateTime.UtcNow.AddMinutes(5), TimeSpan.Zero);
             if(stateCode!="0")
             {
                 return new ApiResult { status = 0, msg = "发送短信返回消息：" + msgState };
@@ -290,7 +290,7 @@ namespace IMS.Web.Controllers
             object obj = CacheHelper.GetCache("App_User_SendMsg" + model.Mobile);
             if (obj == null)
             {
-                return new ApiResult { status = 0, msg = "手机号不一致" };
+                return new ApiResult { status = 0, msg = "手机号未获取验证码" };
             }
             if (obj.ToString() != model.Code)
             {
@@ -356,7 +356,7 @@ namespace IMS.Web.Controllers
             object obj = CacheHelper.GetCache("App_User_SendMsg" + model.Mobile);
             if (obj == null)
             {
-                return new ApiResult { status = 0, msg = "手机号不一致" };
+                return new ApiResult { status = 0, msg = "手机号未获取验证码" };
             }
             if (obj.ToString() != model.Code)
             {

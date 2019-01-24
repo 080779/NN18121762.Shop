@@ -947,6 +947,7 @@ namespace IMS.Service.Service
                 {
                     model.TotalOrderAmount = await res.SumAsync(o=>o.Amount);
                 }
+                model.TotalBonusAmount = await dbc.GetAll<UserEntity>().AsNoTracking().SumAsync(a => a.BonusAmount);
                 return model;
             }
         }

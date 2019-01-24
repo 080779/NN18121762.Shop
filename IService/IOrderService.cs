@@ -48,5 +48,6 @@ namespace IMS.IService
         public int ApplyTakeCashCount { get; set; }
         public int OrderCount { get; set; }
         public decimal TotalOrderAmount { get; set; }
+        public decimal TotalBonusAmount { get; set; }
     }
 }
