@@ -402,6 +402,7 @@
     <Compile Include="Controllers\PayTypeController.cs" />
     <Compile Include="Controllers\RefundController.cs" />
     <Compile Include="Controllers\ReturnController.cs" />
+    <Compile Include="Controllers\AreaController.cs" />
     <Compile Include="Controllers\SlideController.cs" />
     <Compile Include="Controllers\NoticeController.cs" />
     <Compile Include="Controllers\AddressController.cs" />

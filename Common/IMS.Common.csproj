@@ -97,6 +97,7 @@
     <Compile Include="HttpClientHelper.cs" />
     <Compile Include="ImageHelper.cs" />
     <Compile Include="JwtHelper.cs" />
+    <Compile Include="MyJsonHelper.cs" />
     <Compile Include="Newtonsoft\JsonNetActionFilter.cs" />
     <Compile Include="Newtonsoft\JsonNetResult.cs" />
     <Compile Include="NPOI.cs" />

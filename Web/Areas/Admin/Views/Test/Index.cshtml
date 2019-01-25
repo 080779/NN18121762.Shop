@@ -66,6 +66,7 @@
                     let page = this;
                     page.shi = "";
                     page.qu = "";
+                    page.quSouce = [];
                     $.each(page.shengSouce, function (k, v) {
                         if (page.sheng == v.name) {
                             page.shiSouce = v.child;
@@ -83,10 +84,13 @@
                 }
             },
             mounted: function () {
-                let page = this;
-                $.getJSON('/js/areas.json', function (data) {
-                    page.shengSouce = data;
-                });
+                //let page = this;
+                //$.getJSON('/js/areas.json', function (data) {
+                //    page.shengSouce = data;
+                //});
+                this.$http.post('/api/area/get', {}, { emulateJSON: true }).then(function (result) {
+                    this.shengSouce = result.data;
+                })
             }
         });
     </script>
