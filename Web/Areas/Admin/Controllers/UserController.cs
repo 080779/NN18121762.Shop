@@ -80,6 +80,8 @@ namespace IMS.Web.Areas.Admin.Controllers
         }
         
         [HttpPost]
+        [AdminLog("会员管理", "账户充值")]
+        [Permission("会员管理_账户充值")]
         public async Task<ActionResult> Charge(long id,int type,string amount)
         {
             decimal Amount;

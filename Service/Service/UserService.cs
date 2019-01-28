@@ -1307,106 +1307,119 @@ namespace IMS.Service.Service
         {
             using (MyDbContext dbc = new MyDbContext())
             {
-                OrderEntity order = await dbc.GetAll<OrderEntity>().SingleOrDefaultAsync(o => o.Code == code);
-                if (order == null)
+                using (var scope = dbc.Database.BeginTransaction())
                 {
-                    return -1;
-                }
-                if (order.OrderStateId != (int)OrderStateEnum.待付款)
-                {
-                    return -4;
-                }
-                UserEntity user = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == order.BuyerId);
-                if (user == null)
-                {
-                    return -2;
-                }
-                if (!user.IsEnabled)
-                {
-                    return -6;
-                }
-
-                var orderlists = dbc.GetAll<OrderListEntity>().Where(o => o.OrderId == order.Id).ToList();
-                decimal totalAmount = 0;
-                foreach (var orderlist in orderlists)
-                {
-                    GoodsEntity goods = await dbc.GetAll<GoodsEntity>().SingleOrDefaultAsync(g => g.Id == orderlist.GoodsId);
-                    totalAmount = totalAmount + orderlist.TotalFee;
-
-                    if (goods == null)
+                    try
                     {
-                        continue;
-                    }
+                        OrderEntity order = await dbc.GetAll<OrderEntity>().SingleOrDefaultAsync(o => o.Code == code);
+                        if (order == null)
+                        {
+                            return -1;
+                        }
+                        if (order.OrderStateId != (int)OrderStateEnum.待付款)
+                        {
+                            return -4;
+                        }
+                        UserEntity user = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == order.BuyerId);
+                        if (user == null)
+                        {
+                            return -2;
+                        }
+                        if (!user.IsEnabled)
+                        {
+                            return -6;
+                        }
 
-                    if (!goods.IsPutaway)
-                    {
-                        return -5;
-                    }
+                        var orderlists = dbc.GetAll<OrderListEntity>().Where(o => o.OrderId == order.Id).ToList();
+                        decimal totalAmount = 0;
+                        foreach (var orderlist in orderlists)
+                        {
+                            GoodsEntity goods = await dbc.GetAll<GoodsEntity>().SingleOrDefaultAsync(g => g.Id == orderlist.GoodsId);
+                            totalAmount = totalAmount + orderlist.TotalFee;
 
-                    if (goods.Inventory < orderlist.Number)
-                    {
-                        return -3;
-                    }
+                            if (goods == null)
+                            {
+                                continue;
+                            }
 
-                    //商品销量、库存
-                    goods.Inventory = goods.Inventory - orderlist.Number;
-                    goods.SaleNum = goods.SaleNum + orderlist.Number;
-                }
-                //user.Amount = user.Amount - order.Amount;
-                user.BuyAmount = user.BuyAmount + order.Amount;
-                user.OrderCount = user.OrderCount + 1;
+                            if (!goods.IsPutaway)
+                            {
+                                return -5;
+                            }
 
-                order.PayTime = DateTime.Now;
-                order.PayTypeId = (int)PayTypeEnum.微信;
-                order.OrderStateId = (int)OrderStateEnum.待发货;
+                            if (goods.Inventory < orderlist.Number)
+                            {
+                                return -3;
+                            }
 
-                JournalEntity journal = new JournalEntity();
-                journal.UserId = user.Id;
-                journal.BalanceAmount = user.Amount;
-                journal.OutAmount = order.Amount;
-                journal.Remark = "用户(" + user.Mobile + ")购买商品";
-                journal.JournalTypeId = (int)JournalTypeEnum.购买商品;
-                journal.OrderCode = order.Code;
-                journal.GoodsId = order.Id;//来至订单ID
-                journal.CurrencyType = 1;//币种,只有rmb
-                dbc.Journals.Add(journal);
-                await dbc.SaveChangesAsync();
+                            //商品销量、库存
+                            goods.Inventory = goods.Inventory - orderlist.Number;
+                            goods.SaleNum = goods.SaleNum + orderlist.Number;
+                        }
+                        //user.Amount = user.Amount - order.Amount;
+                        user.BuyAmount = user.BuyAmount + order.Amount;
+                        user.OrderCount = user.OrderCount + 1;
 
-                if (user.LevelId == (int)LevelEnum.用户)
-                {
-                    //购买用户升级
-                    await UserLevelUpAsync(dbc, user, order);
-                }
-                else
-                {
-                    if (user.BuyType == (int)BuyTypeEnum.首次购买)
-                    {
-                        user.BuyType = (int)BuyTypeEnum.再次购买;
+                        order.PayTime = DateTime.Now;
+                        order.PayTypeId = (int)PayTypeEnum.微信;
+                        order.OrderStateId = (int)OrderStateEnum.待发货;
+
+                        JournalEntity journal = new JournalEntity();
+                        journal.UserId = user.Id;
+                        journal.BalanceAmount = user.Amount;
+                        journal.OutAmount = order.Amount;
+                        journal.Remark = "用户(" + user.Mobile + ")购买商品";
+                        journal.JournalTypeId = (int)JournalTypeEnum.购买商品;
+                        journal.OrderCode = order.Code;
+                        journal.GoodsId = order.Id;//来至订单ID
+                        journal.CurrencyType = 1;//币种,只有rmb
+                        dbc.Journals.Add(journal);
                         await dbc.SaveChangesAsync();
+
+                        if (user.LevelId == (int)LevelEnum.用户)
+                        {
+                            //购买用户升级
+                            await UserLevelUpAsync(dbc, user, order);
+                        }
+                        else
+                        {
+                            if (user.BuyType == (int)BuyTypeEnum.首次购买)
+                            {
+                                user.BuyType = (int)BuyTypeEnum.再次购买;
+                                await dbc.SaveChangesAsync();
+                            }
+                        }
+
+                        long recommendId = user.RecommendId;
+                        while (recommendId > 0)
+                        {
+                            UserEntity recUser = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == recommendId);
+
+                            switch (recUser.LevelId)
+                            {
+                                case (int)LevelEnum.会员: await MemberLevelUpAsync(dbc, recUser); break;
+                                case (int)LevelEnum.银卡会员: await SilverMemberLevelUpAsync(dbc, recUser); break;
+                                case (int)LevelEnum.黄金会员: await GoldMemberLevelUpAsync(dbc, recUser); break;
+                                case (int)LevelEnum.钻石会员: await DiamondMemberLevelUpAsync(dbc, recUser); break;
+                                case (int)LevelEnum.至尊会员: await ExtremeMemberLevelUpAsync(dbc, recUser); break;
+                                case (int)LevelEnum.皇冠会员: await CrownMemberLevelUpAsync(dbc, recUser); break;
+                            }
+                            recommendId = recUser.RecommendId;
+                        }
+
+                        //发放奖励
+                        await CalcAwardRecommendAsync(dbc, user, order);
+                        log.DebugFormat("微信支付后订单状态：{0}", order.OrderStateId);
+                        scope.Commit();
+                        return 1;
                     }
-                }
-
-                long recommendId = user.RecommendId;
-                while (recommendId > 0)
-                {
-                    UserEntity recUser = await dbc.GetAll<UserEntity>().SingleOrDefaultAsync(u => u.Id == recommendId);
-
-                    switch (recUser.LevelId)
+                    catch(Exception ex)
                     {
-                        case (int)LevelEnum.会员: await MemberLevelUpAsync(dbc, recUser); break;
-                        case (int)LevelEnum.银卡会员: await SilverMemberLevelUpAsync(dbc, recUser); break;
-                        case (int)LevelEnum.黄金会员: await GoldMemberLevelUpAsync(dbc, recUser); break;
-                        case (int)LevelEnum.钻石会员: await DiamondMemberLevelUpAsync(dbc, recUser); break;
-                        case (int)LevelEnum.至尊会员: await ExtremeMemberLevelUpAsync(dbc, recUser); break;
-                        case (int)LevelEnum.皇冠会员: await CrownMemberLevelUpAsync(dbc, recUser); break;
+                        log.ErrorFormat("WeChatPay:{0}", ex.ToString());
+                        scope.Rollback();
+                        return -8;
                     }
-                    recommendId = recUser.RecommendId;
-                }
-
-                //发放奖励
-                await CalcAwardRecommendAsync(dbc, user, order);
-                log.DebugFormat("微信支付后订单状态：{0}", order.OrderStateId);
-                return 1;
+                }                    
             }
         }
 
