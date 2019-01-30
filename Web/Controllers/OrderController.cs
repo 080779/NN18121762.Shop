@@ -231,7 +231,7 @@ namespace IMS.Web.Controllers
             {
                 return new ApiResult { status = 0, msg = "生成订单失败" };
             }
-            long payTypeId = await idNameService.GetIdByNameAsync("余额");
+            int payTypeId = 2;
             OrderDTO dto = await orderService.GetModelAsync(id);
             if (payTypeId == model.PayTypeId)
             {

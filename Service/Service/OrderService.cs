@@ -860,7 +860,7 @@ namespace IMS.Service.Service
                 //    day = 3;
                 //}
                 DateTime time = DateTime.Now.AddMinutes(-30);
-                var orders1 = dbc.GetAll<OrderEntity>().Where(r => r.OrderStateId == (int)OrderStateEnum.待付款).Where(r => r.CreateTime < time);
+                var orders1 = dbc.GetAll<OrderEntity>().Where(r => r.PayTime == null).Where(r => r.OrderStateId == (int)OrderStateEnum.待付款).Where(r => r.CreateTime < time);
                 long count1 = orders1.Count();
                 stateId = (int)OrderStateEnum.已取消;
                 foreach (OrderEntity order in orders1)
