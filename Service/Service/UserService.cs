@@ -1411,7 +1411,7 @@ namespace IMS.Service.Service
                         await CalcAwardRecommendAsync(dbc, user, order);
                         log.DebugFormat("微信支付后订单状态：{0}", order.OrderStateId);
                         scope.Commit();
-                        return 1;
+                        return order.Id;
                     }
                     catch(Exception ex)
                     {
