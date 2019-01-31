@@ -18,6 +18,7 @@ namespace IMS.Service.Config
             Property(p => p.TradePassword).HasMaxLength(50);
             Property(p => p.ShareCode).HasMaxLength(250);
             Property(p => p.RecommendCode).HasMaxLength(50);
+            Property(p => p.Address).HasMaxLength(500);
             Property(p => p.RecommendPath);
         }
     }

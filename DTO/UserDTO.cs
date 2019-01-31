@@ -29,5 +29,6 @@ namespace IMS.DTO
         public bool IsEnabled { get; set; }
         public bool IsReturned { get; set; } //是否退过货
         public bool IsUpgraded { get; set; } //是否升级退过货
+        public string Address { get; set; }
     }
 }

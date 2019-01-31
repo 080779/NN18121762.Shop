@@ -9,8 +9,8 @@ namespace IMS.IService
     /// </summary>
     public interface IAddressService : IServiceSupport
     {
-        Task<long> AddAsync(long userId, string name, string mobile, string address, bool isDefault);
-        Task<bool> UpdateAsync(long id, string name, string mobile, string address, bool isDefault);
+        Task<long> AddAsync(long userId, string name, string mobile,string sheng,string shi,string qu, string address, bool isDefault);
+        Task<bool> UpdateAsync(long id, string name, string mobile, string sheng, string shi, string qu, string address, bool isDefault);
         Task<bool> DeleteAsync(long id);
         Task<AddressDTO> GetModelAsync(long id);
         Task<AddressDTO> GetDefaultModelAsync(long userId);

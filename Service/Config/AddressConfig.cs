@@ -12,6 +12,9 @@ namespace IMS.Service.Config
             Property(p => p.Mobile).HasMaxLength(50).IsRequired();
             Property(p => p.Address).HasMaxLength(256);
             Property(p => p.Description).HasMaxLength(100);
+            Property(p => p.Sheng).HasMaxLength(50);
+            Property(p => p.Shi).HasMaxLength(50);
+            Property(p => p.Qu).HasMaxLength(50);
         }
     }
 }

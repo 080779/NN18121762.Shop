@@ -942,7 +942,7 @@ namespace IMS.Service.Service
                 model.RegisterCount = await dbc.GetAll<UserEntity>().AsNoTracking().Where(u => u.CreateTime.Year == time.Year && u.CreateTime.Month == time.Month && u.CreateTime.Day == time.Day).CountAsync();
                 var res = dbc.GetAll<OrderEntity>().AsNoTracking().Where(o=>o.OrderStateId>(int)OrderStateEnum.待付款 && o.OrderStateId<(int)OrderStateEnum.已取消).Where(u => u.CreateTime.Year == time.Year && u.CreateTime.Month == time.Month && u.CreateTime.Day == time.Day);
                 model.OrderCount = await res.CountAsync();
-                model.ApplyTakeCashCount= await dbc.GetAll<TakeCashEntity>().AsNoTracking().Where(u=>u.StateId==(int)TakeCashStateEnum.未结款).Where(u =>u.CreateTime.Year == time.Year && u.CreateTime.Month == time.Month && u.CreateTime.Day == time.Day).CountAsync();
+                model.ApplyTakeCashCount= await dbc.GetAll<TakeCashEntity>().AsNoTracking().Where(u=>u.StateId==(int)TakeCashStateEnum.未结款).CountAsync();
                 if(model.OrderCount>0)
                 {
                     model.TotalOrderAmount = await res.SumAsync(o=>o.Amount);

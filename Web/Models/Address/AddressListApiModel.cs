@@ -15,6 +15,9 @@ namespace IMS.Web.Models.Address
         public long id { get; set; }
         public string name { get; set; }//收货人姓名
         public string mobile { get; set; }//收货人手机号
+        public string sheng { get; set; }
+        public string shi { get; set; }
+        public string qu { get; set; }
         public string address { get; set; }//收货人地址
         public bool isDefault { get; set; }
     }

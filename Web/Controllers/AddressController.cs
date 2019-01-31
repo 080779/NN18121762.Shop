@@ -26,7 +26,7 @@ namespace IMS.Web.Controllers
             AddressSearchResult result = await addressService.GetModelListAsync(user.Id, null, null, null, model.PageIndex, model.PageSize);
             AddressListApiModel res = new AddressListApiModel();
             res.pageCount = result.PageCount;
-            res.addressList = result.Address.Select(a => new AddressList { id = a.Id, address = a.Address, name = a.Name, mobile = a.Mobile, isDefault = a.IsDefault }).ToList();
+            res.addressList = result.Address.Select(a => new AddressList { id = a.Id,sheng=a.Sheng,shi=a.Shi,qu=a.Qu,address = a.Address, name = a.Name, mobile = a.Mobile, isDefault = a.IsDefault }).ToList();
             return new ApiResult { status = 1, data = res };
         }
         [HttpPost]
@@ -80,7 +80,7 @@ namespace IMS.Web.Controllers
                 return new ApiResult { status = 0, msg = "收货人地址不能为空" };
             }
             User user = JwtHelper.JwtDecrypt<User>(ControllerContext);
-            long id = await addressService.AddAsync(user.Id, model.Name, model.Mobile, model.Address, model.IsDefault);
+            long id = await addressService.AddAsync(user.Id, model.Name, model.Mobile,model.Sheng,model.Shi,model.Qu, model.Address, model.IsDefault);
             if (id <= 0)
             {
                 return new ApiResult { status = 1, msg = "收货地址添加失败" };
@@ -106,7 +106,7 @@ namespace IMS.Web.Controllers
             {
                 return new ApiResult { status = 0, msg = "收货人地址不能为空" };
             }
-            bool flag = await addressService.UpdateAsync(model.Id, model.Name, model.Mobile, model.Address, model.IsDefault);
+            bool flag = await addressService.UpdateAsync(model.Id, model.Name, model.Mobile, model.Sheng, model.Shi, model.Qu, model.Address, model.IsDefault);
             if (!flag)
             {
                 return new ApiResult { status = 0, msg = "收货地址修改失败" };

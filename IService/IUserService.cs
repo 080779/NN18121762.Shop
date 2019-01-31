@@ -65,6 +65,7 @@ namespace IMS.IService
         Task<decimal> GetTeamBuyAmountAsync(long id);
         decimal GetTeamBuyAmount(long id);
         Task<CalcLevelDataModel[]> GetLevelDataAsync();
+        Task<decimal> GetAreaScoreAsync(string sheng, string shi, string qu);
         /// <summary>
         /// 根据id获得用户模型
         /// </summary>

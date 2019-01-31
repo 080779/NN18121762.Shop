@@ -1518,6 +1518,36 @@ namespace IMS.Service.Service
             }
         }
 
+        public async Task<decimal> GetAreaScoreAsync(string sheng, string shi, string qu)
+        {
+            using (MyDbContext dbc = new MyDbContext())
+            {
+                var entities = dbc.GetAll<UserEntity>();
+                string keyword = string.Empty;
+                if(!string.IsNullOrEmpty(sheng))
+                {
+                    keyword = sheng;
+                    if(!string.IsNullOrEmpty(shi))
+                    {
+                        keyword = keyword + shi;
+                        if(!string.IsNullOrEmpty(qu))
+                        {
+                            keyword = keyword + qu;
+                        }
+                    }
+                }
+                if(!string.IsNullOrEmpty(keyword))
+                {
+                    entities = entities.Where(a => a.Address.Contains(keyword));
+                }
+                if(!(await entities.AnyAsync()))
+                {
+                    return 0;
+                }
+                return await entities.SumAsync(a => a.BuyAmount);
+            }
+        }
+
         public async Task<UserDTO> GetModelAsync(long id)
         {
             using (MyDbContext dbc = new MyDbContext())

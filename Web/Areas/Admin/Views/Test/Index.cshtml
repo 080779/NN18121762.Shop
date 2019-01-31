@@ -48,7 +48,10 @@
                 <option value="">请选择县(区)</option>
                 <option v-for="item in quSouce" v-bind:value="item" v-html="item"></option>
             </select>
+            <button v-on:click="search">查询</button>
         </div>
+
+        <div v-html="score"></div>
     </div>
     <script>
         var vue = new Vue({
@@ -59,27 +62,36 @@
                 quSouce: [],
                 sheng: "",
                 shi: "",
-                qu:""
+                qu: "",
+                score:""
             },
             methods: {
                 shengchange: function () {
-                    let page = this;
-                    page.shi = "";
-                    page.qu = "";
-                    page.quSouce = [];
-                    $.each(page.shengSouce, function (k, v) {
-                        if (page.sheng == v.name) {
-                            page.shiSouce = v.child;
+                    let that = this;
+                    that.shi = "";
+                    that.qu = "";
+                    that.quSouce = [];
+                    if (that.sheng == "") {
+                        that.shiSouce = [];
+                    }
+                    $.each(that.shengSouce, function (k, v) {
+                        if (that.sheng == v.name) {
+                            that.shiSouce = v.child;
                         }
                     })
                 },
                 shichange: function () {
-                    let page = this;
-                    page.qu = "";
-                    $.each(page.shiSouce, function (k, v) {
-                        if (page.shi == v.name) {
-                            page.quSouce = v.child;
+                    let that = this;
+                    that.qu = "";
+                    $.each(that.shiSouce, function (k, v) {
+                        if (that.shi == v.name) {
+                            that.quSouce = v.child;
                         }
+                    })
+                },
+                search: function () {
+                    this.$http.post('/admin/test/search', { sheng: this.sheng, shi: this.shi, qu: this.qu }, { emulateJSON: true }).then(function (result) {
+                        this.score = result.data.data;
                     })
                 }
             },

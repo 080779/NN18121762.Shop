@@ -15,6 +15,7 @@ namespace IMS.Web.Areas.Admin.Controllers
 {
     public class TestController : Controller
     {
+        public IUserService userService { get; set; }
         public ActionResult List()
         {
             WeChatPay w = new WeChatPay();
@@ -27,6 +28,12 @@ namespace IMS.Web.Areas.Admin.Controllers
         public ActionResult Index()
         {
             return View();
+        }
+
+        [AllowAnonymous]
+        public async Task<ActionResult> search(string sheng,string shi,string qu)
+        {
+            return Json(new AjaxResult { Status = 1, Data = await userService.GetAreaScoreAsync(sheng, shi, qu) });
         }
 
         public ActionResult Upload(listres imgList)

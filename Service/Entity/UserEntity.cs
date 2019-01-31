@@ -37,5 +37,6 @@ namespace IMS.Service.Entity
         public bool IsUpgraded { get; set; } = false;//是否升级退过货
         public int BuyType { get; set; } = (int)BuyTypeEnum.普通购买;
         public int OrderCount { get; set; } = 0;
+        public string Address { get; set; }
     }
 }

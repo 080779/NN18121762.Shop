@@ -25,9 +25,12 @@ namespace IMS.Service.Service
             dto.Mobile = entity.Mobile;
             dto.UserId = entity.UserId;
             dto.IsDefault = entity.IsDefault;
+            dto.Sheng = entity.Sheng;
+            dto.Shi = entity.Shi;
+            dto.Qu = entity.Qu;
             return dto;
         }
-        public async Task<long> AddAsync(long userId, string name, string mobile, string address,bool isDefault)
+        public async Task<long> AddAsync(long userId, string name, string mobile, string sheng, string shi, string qu, string address,bool isDefault)
         {
             using (MyDbContext dbc = new MyDbContext())
             {
@@ -35,6 +38,9 @@ namespace IMS.Service.Service
                 entity.UserId = userId;
                 entity.Name = name;
                 entity.Mobile = mobile;
+                entity.Sheng = sheng;
+                entity.Shi = shi;
+                entity.Qu = qu;
                 entity.Address = address;
                 if(isDefault)
                 {
@@ -121,7 +127,7 @@ namespace IMS.Service.Service
             }
         }       
 
-        public async Task<bool> UpdateAsync(long id, string name, string mobile, string address, bool isDefault)
+        public async Task<bool> UpdateAsync(long id, string name, string mobile, string sheng, string shi, string qu, string address, bool isDefault)
         {
             using (MyDbContext dbc = new MyDbContext())
             {
@@ -132,6 +138,9 @@ namespace IMS.Service.Service
                 }
                 entity.Name = name;
                 entity.Mobile = mobile;
+                entity.Sheng = sheng;
+                entity.Shi = shi;
+                entity.Qu = qu;
                 entity.Address = address;
                 if (!entity.IsDefault && isDefault)
                 {
